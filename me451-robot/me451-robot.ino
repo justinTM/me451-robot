@@ -1,6 +1,6 @@
 #include <PID_v1.h>
 
-#define NUM_MEASURES 10
+#define NUM_MEASURES 100
 
 
 // MOTOR pins
@@ -36,7 +36,7 @@ int array_s2[NUM_MEASURES];
 int array_s3[NUM_MEASURES];
 
 // moving average window filter stuff
-int averages[NUM_MEASURES];  // each element is the average of a sensor array
+float averages[NUM_MEASURES];  // each element is the average of a sensor array
 unsigned long int iMovingAverage = 0;
 const float windowSize = 50.0;
 const int intWindowSize = (int) windowSize;
@@ -108,12 +108,16 @@ void loop() {
     i++;
   } else if (i == NUM_MEASURES && !isCalibrated) {
     Serial.println("");
+
     isCalibrated  = calibrate_sensors(averages, array_s0, array_s1, array_s2, array_s3);
 
-    Serial.println(averages[0]);
-    Serial.println(averages[1]);
-    Serial.println(averages[2]);
+    Serial.println("Calibrated values:");
+    Serial.print(averages[0]); Serial.print(", ");
+    Serial.print(averages[1]); Serial.print(", ");
+    Serial.print(averages[2]); Serial.print(", ");
     Serial.println(averages[3]);
+
+    Serial.println("Calibrated! Begin garbage:");
   } else {
 
       sum_s0 = sum_s0 - values_s0[iMovingAverage];
@@ -131,6 +135,9 @@ void loop() {
       sum_s2 = sum_s2 + values_s2[iMovingAverage];
       sum_s3 = sum_s3 + values_s3[iMovingAverage];
 
+
+      iMovingAverage++;
+
       if (iMovingAverage >= intWindowSize) {
         iMovingAverage = 0; // reset the moving average back to beginning
       }
@@ -140,19 +147,18 @@ void loop() {
       avg_s2 = sum_s2 / windowSize;
       avg_s3 = sum_s3 / windowSize;
 
-      Serial.print(sum_s0); Serial.print(", ");
-      Serial.print(sum_s1); Serial.print(", ");
-      Serial.print(sum_s2); Serial.print(", ");
-      Serial.print(sum_s3); Serial.print(", ");
-      Serial.println("");
-
-//      Serial.print(avg_s0); Serial.print(", ");
-//      Serial.print(avg_s1); Serial.print(", ");
-//      Serial.print(avg_s2); Serial.print(", ");
-//      Serial.print(avg_s3); Serial.print(", ");
+//      Serial.print(sum_s0); Serial.print(", ");
+//      Serial.print(sum_s1); Serial.print(", ");
+//      Serial.print(sum_s2); Serial.print(", ");
+//      Serial.print(sum_s3); Serial.print(", ");
 //      Serial.println("");
 
-      iMovingAverage++;
+      Serial.print(avg_s0); Serial.print(", ");
+      Serial.print(avg_s1); Serial.print(", ");
+      Serial.print(avg_s2); Serial.print(", ");
+      Serial.print(avg_s3); Serial.print(", ");
+      Serial.println("");
+
 
   }
 
@@ -204,12 +210,12 @@ void set_up_motors(int pwm_speed) {
 }
 
 
-bool calibrate_sensors(int averages[], int array_s0[], int array_s1[], int array_s2[], int array_s3[]) {
+bool calibrate_sensors(float averages[], int array_s0[], int array_s1[], int array_s2[], int array_s3[]) {
   // average of each array
-  averages[0] = round( average_of_array(array_s0, NUM_MEASURES) );
-  averages[1] = round( average_of_array(array_s1, NUM_MEASURES) );
-  averages[2] = round( average_of_array(array_s2, NUM_MEASURES) );
-  averages[3] = round( average_of_array(array_s3, NUM_MEASURES) );
+  averages[0] = average_of_array(array_s0, NUM_MEASURES);
+  averages[1] = average_of_array(array_s1, NUM_MEASURES);
+  averages[2] = average_of_array(array_s2, NUM_MEASURES);
+  averages[3] = average_of_array(array_s3, NUM_MEASURES);
 
 
 
