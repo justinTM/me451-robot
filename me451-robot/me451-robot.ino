@@ -22,8 +22,8 @@ double k_D = 0.095;  // double Kp=0.845, Ki=0, Kd=0.143;
 // PHOTODIODE pins
 int sensor_pin0 = 0;
 int sensor_pin1 = 1;
-int sensor_pin2 = 3;
-int sensor_pin3 = 2;
+int sensor_pin2 = 2;
+int sensor_pin3 = 3;
 
 // calibrating pins
 int i = 0;  // count current number of measurements
@@ -36,7 +36,7 @@ int array_s2[NUM_MEASURES];
 int array_s3[NUM_MEASURES];
 
 // each element is the average of a sensor array
-float averages[NUM_MEASURES];
+int averages[NUM_MEASURES];
 
 
 
@@ -66,12 +66,6 @@ void loop() {
   float offset_photodiodes12 = get_photodiode_difference(sensor_pin1, sensor_pin2);  // diff = pin1 - pin2
 
   Input = offset_photodiodes12;
-//
-//  Serial.print(analogRead(sensor_pin0)); Serial.print(",");
-//  Serial.print(analogRead(sensor_pin1)); Serial.print(",");
-//  Serial.print(analogRead(sensor_pin2)); Serial.print(",");
-//  Serial.print(analogRead(sensor_pin3)); Serial.print(",");
-//  Serial.println("");
 
   // feed offset to PID input
   // compute new PID value
@@ -98,6 +92,12 @@ void loop() {
     Serial.println(averages[1]);
     Serial.println(averages[2]);
     Serial.println(averages[3]);
+  } else {
+      Serial.print(analogRead(sensor_pin0) - averages[0]); Serial.print(",");
+      Serial.print(analogRead(sensor_pin1) - averages[1]); Serial.print(",");
+      Serial.print(analogRead(sensor_pin2) - averages[2]); Serial.print(",");
+      Serial.print(analogRead(sensor_pin3) - averages[3]); Serial.print(",");
+      Serial.println("");
   }
 
 
@@ -143,12 +143,15 @@ void set_up_motors(int pwm_speed) {
 }
 
 
-bool calibrate_sensors(float averages[], int array_s0[], int array_s1[], int array_s2[], int array_s3[]) {
+bool calibrate_sensors(int averages[], int array_s0[], int array_s1[], int array_s2[], int array_s3[]) {
   // average of each array
-  averages[0] = average_of_array(array_s0, NUM_MEASURES);
-  averages[1] = average_of_array(array_s1, NUM_MEASURES);
-  averages[2] = average_of_array(array_s2, NUM_MEASURES);
-  averages[3] = average_of_array(array_s3, NUM_MEASURES);
+  averages[0] = (int) average_of_array(array_s0, NUM_MEASURES);
+  averages[1] = (int) average_of_array(array_s1, NUM_MEASURES);
+  averages[2] = (int) average_of_array(array_s2, NUM_MEASURES);
+  averages[3] = (int) average_of_array(array_s3, NUM_MEASURES);
+
+
+
 
   return true;
 }
