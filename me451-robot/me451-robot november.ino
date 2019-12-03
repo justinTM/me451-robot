@@ -90,7 +90,7 @@ void loop() {
   // feed offset to PID input
   // compute new PID value
   myPID.Compute();
-
+  Serial.println(Output);
   // feed PID output to motors (motor Left/Right ratio)
   // apply motor ratio to both motors (0-255 for L and R)
 
@@ -151,33 +151,25 @@ int get_calibrated_sensor_value(int sensor_pin, int average) {
 
 void run_motors(int pwm_speed) {
 
-  Serial.println(pwm_speed);
-  if (pwm_speed < -100){
+
+  if (pwm_speed < -30){
     digitalWrite(in1, LOW);
     digitalWrite(in2, HIGH);
-    analogWrite(enA, -pwm_speed);  // RIGHT MOTOR
+    analogWrite(enA, abs(pwm_speed));  // RIGHT MOTOR
+  }
+  if (pwm_speed > 30){
     digitalWrite(in3, LOW);
     digitalWrite(in4, HIGH);
-    analogWrite(enB, 100);  // LEFT MOTOR
+    analogWrite(enB, pwm_speed);  // LEFT MOTOR
   }
-  if (pwm_speed > 100){
+  else{
     digitalWrite(in1, LOW);
     digitalWrite(in2, HIGH);
     analogWrite(enA, 100);  // RIGHT MOTOR
     digitalWrite(in3, LOW);
     digitalWrite(in4, HIGH);
-    analogWrite(enB, pwm_speed);  // LEFT MOTOR
+    analogWrite(enB, 125);  // LEFT MOTOR
   }
-//  else{
-//  
-//    digitalWrite(in1, LOW);
-//    digitalWrite(in2, HIGH);
-//    analogWrite(enA, 100);  // RIGHT MOTOR
-//    digitalWrite(in3, LOW);
-//    digitalWrite(in4, HIGH);
-//    analogWrite(enB, 125);  // LEFT MOTOR
-//
-//  }
 
 }
 
