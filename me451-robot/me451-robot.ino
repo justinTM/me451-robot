@@ -50,10 +50,15 @@ float sum_s1 = 0;
 float sum_s2 = 0;
 float sum_s3 = 0;
 
+int ms_start = 0;
+int isTurnTime = true;
+
+
+
 
 void setup() {
 
-  // PID
+  // set up PID
   Setpoint = 0;
   myPID.SetMode(AUTOMATIC);  // turn PID on
   myPID.SetOutputLimits(-limit, limit);
@@ -66,32 +71,31 @@ void setup() {
     values_s2[i] = 0;
     values_s3[i] = 0;
   }
-  
-  pinMode(enA, OUTPUT);
-  pinMode(enB, OUTPUT);
 
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  pinMode(in3, OUTPUT);
-  pinMode(in4, OUTPUT);
+  set_up_photodiodes();
 
-//  Serial.println("sensor_pin0, sensor_pin1, sensor_pin2, sensor_pin3, PID_IN, PID_OUT");
-  Serial.println("PID_OUT");
+  Serial.println("sensor_pin0, sensor_pin1, sensor_pin2, sensor_pin3, PID_IN, PID_OUT");
+  //  Serial.println("PID_IN, PID_OUT");
+
+  ms_start = millis();
 }
 
-// pid output drives a ratio of two motor speeds
 
 
 
 void loop() {
-  delay(10);
-  Input = (avg_s0 + avg_s1) - (avg_s2 + avg_s3);
-//  Serial.println(avg_s0, avg_s1, avg_s2, avg_s3, Input);
-
+  
+  int ms_timer = 500;
+  
+  if ((millis() - ms_start) < ms_timer) {
+    turn_180_counterclockwise(200);
+  } else {
+    set_up_motors_straight();
+  }
+  
+  Input = (5*avg_s0 + avg_s1) - (avg_s2 + 5*avg_s3);
   myPID.Compute();
-
-//  run_motors(Output);
-  run_motors(200);
+  run_motors(Output);
 
   sum_s0 = sum_s0 - values_s0[iMovingAverage];
   sum_s1 = sum_s1 - values_s1[iMovingAverage];
@@ -108,7 +112,6 @@ void loop() {
   sum_s2 = sum_s2 + values_s2[iMovingAverage];
   sum_s3 = sum_s3 + values_s3[iMovingAverage];
 
-
   iMovingAverage++;
 
   if (iMovingAverage >= intWindowSize) {
@@ -119,13 +122,6 @@ void loop() {
   avg_s1 = gain*(sum_s1 / windowSize);
   avg_s2 = gain*(sum_s2 / windowSize);
   avg_s3 = gain*(sum_s3 / windowSize);
-
-//      Serial.print(sum_s0); Serial.print(", ");
-//      Serial.print(sum_s1); Serial.print(", ");
-//      Serial.print(sum_s2); Serial.print(", ");
-//      Serial.print(sum_s3); Serial.print(", ");
-//      Serial.println("");
-
       
 //  Serial.print(avg_s0); Serial.print(", ");
 //  Serial.print(avg_s1); Serial.print(", ");
@@ -134,6 +130,7 @@ void loop() {
 //  Serial.print(Input); Serial.print(", ");
   Serial.print(Output); Serial.println("");
 }
+
 
 
 
@@ -149,56 +146,48 @@ void run_motors(int pwm_speed) {
 //  Serial.println(pwm_speed);
   int threshold = 100;
   
+  // right wheel is going faster than the left, so make left faster
   if (pwm_speed > -threshold && pwm_speed < threshold) {
-    
-    return; // ignore PID outputs below threshold
-    
+    go_straight(200);
   } else if (pwm_speed > threshold) {
-     
-     turn_right(pwm_speed);
-     
+    turn_right(pwm_speed);
   } else if (pwm_speed < -threshold) {
-    
     turn_left(pwm_speed);
-    
   }
-  
-//  if (pwm_speed < -100){
-//    digitalWrite(in1, LOW);
-//    digitalWrite(in2, HIGH);
-//    analogWrite(enA, -pwm_speed);  // RIGHT MOTOR
-//    digitalWrite(in3, LOW);
-//    digitalWrite(in4, HIGH);
-//    analogWrite(enB, 100);  // LEFT MOTOR
-//  }
-//  if (pwm_speed > 100){
-//    digitalWrite(in1, LOW);
-//    digitalWrite(in2, HIGH);
-//    analogWrite(enA, 100);  // RIGHT MOTOR
-//    digitalWrite(in3, LOW);
-//    digitalWrite(in4, HIGH);
-//    analogWrite(enB, pwm_speed);  // LEFT MOTOR
-//  }
+}
+
+
+
+
+void go_straight(int pwm_speed) {
+  analogWrite(enA, pwm_speed);  // RIGHT MOTOR
+  analogWrite(enB, pwm_speed*1.15);  // LEFT MOTOR
 }
 
 
 void turn_right(int pwm_speed) {
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
-  analogWrite(enA, -pwm_speed);  // RIGHT MOTOR
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
+  analogWrite(enA, pwm_speed);  // RIGHT MOTOR
   analogWrite(enB, 100);  // LEFT MOTOR
 }
 
+
 void turn_left(int pwm_speed) {
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
   analogWrite(enA, 100);  // RIGHT MOTOR
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
-  analogWrite(enB, pwm_speed);  // LEFT MOTOR
+  analogWrite(enB, -pwm_speed);  // LEFT MOTOR
 }
+
+
+void turn_180_counterclockwise(int pwm_speed) {
+  digitalWrite(in1, HIGH);  // reverse one of the motors
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);  // forward one of the motors
+  digitalWrite(in4, HIGH);
+
+  analogWrite(enA, pwm_speed);  // RIGHT MOTOR
+  analogWrite(enB, pwm_speed * 1.1);  // LEFT MOTOR
+}
+
+
 
 
 float average_of_array(int this_array[], int num_elements) {
@@ -212,11 +201,23 @@ float average_of_array(int this_array[], int num_elements) {
 }
 
 
-void set_up_photodiodes() {
 
+
+void set_up_photodiodes() {
   pinMode(sensor_pin0, INPUT);
   pinMode(sensor_pin1, INPUT);
   pinMode(sensor_pin2, INPUT);
   pinMode(sensor_pin3, INPUT);
+}
 
+
+
+
+void set_up_motors_straight() {
+  pinMode(enA, OUTPUT);
+  pinMode(enB, OUTPUT);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
 }
