@@ -53,6 +53,8 @@ float sum_s3 = 0;
 int ms_start = 0;
 int isTurnTime = true;
 
+bool isDone = false;
+
 
 
 
@@ -85,12 +87,20 @@ void setup() {
 
 void loop() {
   
-  int ms_timer = 500;
+  int ms_timer = 1400;
   
   if ((millis() - ms_start) < ms_timer) {
     turn_180_counterclockwise(200);
   } else {
-    set_up_motors_straight();
+    if (!isDone) {
+      set_up_motors_straight();
+  
+      analogWrite(enA, 0);  // RIGHT MOTOR
+      analogWrite(enB, 0);  // LEFT MOTOR
+  
+      delay(1000);
+      isDone = true;
+    }
   }
   
   Input = (5*avg_s0 + avg_s1) - (avg_s2 + 5*avg_s3);
@@ -152,6 +162,7 @@ void run_motors(int pwm_speed) {
   } else if (pwm_speed > threshold) {
     turn_right(pwm_speed);
   } else if (pwm_speed < -threshold) {
+    // pwm_speed is negative
     turn_left(pwm_speed);
   }
 }
@@ -161,19 +172,19 @@ void run_motors(int pwm_speed) {
 
 void go_straight(int pwm_speed) {
   analogWrite(enA, pwm_speed);  // RIGHT MOTOR
-  analogWrite(enB, pwm_speed*1.15);  // LEFT MOTOR
+  analogWrite(enB, pwm_speed*1.1);  // LEFT MOTOR
 }
 
 
 void turn_right(int pwm_speed) {
-  analogWrite(enA, pwm_speed);  // RIGHT MOTOR
-  analogWrite(enB, 100);  // LEFT MOTOR
+  analogWrite(enA, 100);  // RIGHT MOTOR
+  analogWrite(enB, pwm_speed);  // LEFT MOTOR
 }
 
 
 void turn_left(int pwm_speed) {
-  analogWrite(enA, 100);  // RIGHT MOTOR
-  analogWrite(enB, -pwm_speed);  // LEFT MOTOR
+  analogWrite(enA, -pwm_speed);  // RIGHT MOTOR
+  analogWrite(enB, 100);  // LEFT MOTOR
 }
 
 
